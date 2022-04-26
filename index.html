@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ 
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<title>Consulta Finance</title>
+	 
+	<link href="css/bootstrap.css" rel="stylesheet">
+	 
+	<link href="css/main.css" rel="stylesheet">
+ 
+	<!--[if lt IE 9]>
+	  <script src="js/html5shiv.js"></script>
+	  <script src="js/respond.min.js"></script>
+	<![endif]-->
+ 
+	<script src="js/pace.js"></script>
+ 
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:300,600' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+	<div class="preloader"></div>
+	
+    <! -- ******************** MASTHEAD SECTION ******************** -->	
+	<main id="top" class="masthead" role="main">
+		<div class="container">
+			
+			</div>
+ 
+			<h2 style="color: white;"> Encuentra el historial de cotizaciones de <br>
+			<strong>Yahoo Finanzas</strong></h2>
+ 
+			<div class="row">
+				<div class="col-md-6 col-sm-12 col-md-offset-3 subscribe">
+					
+						<div class="form-group">
+							<div class="col-md-7 col-sm-6 col-sm-offset-1 col-md-offset-0">
+								<input class="form-control input-lg" name="text" type="text" id="Cuenta" placeholder="Ingresa el código de empresa" >
+								<p style="text-align: left;color: white;">Ejemplo: AMZN</p>
+							</div>
+							<div class="col-md-5 col-sm-4">
+							  <button class="btn btn-success btn-lg" onclick="buscarCuenta()">Buscar</button>
+							</div>
+						</div>
+					
+					<span id="result" class="alertMsg"></span> </div>
+				</div>
+ 		
+				
+		</div><! --/container -->
+	</main><! --/main -->
+
+   <div class="row">
+		<div class="col-md-10 col-sm-12 subscribe col-md-offset-1">
+ 			<h3 id="company_name" style="color: black;"></h3>
+ 			<h6 style="color: blue;"  onclick="exportTableToCSV()"><u>Descargar CSV</u></h6>
+ 			<span>Últimos 100 registros</span>
+ 			<table class="table" >
+			  <thead>
+			    <tr>
+			      <th scope="col">#</th>
+			      <th scope="col">Date</th>
+			      <th scope="col">Open</th>
+			      <th scope="col">High</th>
+			      <th scope="col">Low</th>
+			      <th scope="col">Close</th>
+			      <th scope="col">Adj Close</th>
+			      <th scope="col">Volume</th>
+			    </tr>
+			  </thead>
+			  <tbody id="table">
+			   
+			  </tbody>
+			</table>
+
+
+ 		</div>
+ 	</div>
+
+<script src="js/jquery.js"></script>
+<script src="js/bootstrap.js"></script>
+<script src="js/easing.js"></script>
+<script src="js/nicescroll.js"></script>
+ <script>
+
+ 	function exportTableToCSV(filename) {
+
+     
+  // Variable to store the final csv data
+    var csv_data = [];
+ 
+    // Get each row data
+    var rows = document.getElementsByTagName('tr');
+    for (var i = 0; i < rows.length; i++) {
+ 
+        // Get each column data
+        var cols = rows[i].querySelectorAll('td,th');
+ 
+        // Stores each csv row data
+        var csvrow = [];
+        for (var j = 0; j < cols.length; j++) {
+ 
+            // Get the text data of each cell of
+            // a row and push it to csvrow
+            csvrow.push(cols[j].innerHTML);
+        }
+ 
+        // Combine each column value with comma
+        csv_data.push(csvrow.join(";"));
+    }
+    // combine each row data with new line character
+    csv_data = csv_data.join('\n');
+ 
+    /* We will use this function later to download
+    the data in a csv file downloadCSVFile(csv_data);
+    */
+
+    var fileN =  document.getElementById("company_name").innerText;
+    fileN = fileN.replace('.','');
+
+
+   // Download CSV file
+   downloadCSV(csv_data, fileN + '.csv');
+	}
+
+	function downloadCSV(csv, filename) {
+		console.log("Descargando...");
+    var csvFile;
+    var downloadLink;
+
+    // CSV file
+    csvFile = new Blob([csv], {type: "text/csv"});
+
+    // Download link
+    downloadLink = document.createElement("a");
+
+    // File name
+    downloadLink.download = filename;
+
+    // Create a link to the file
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+
+    // Hide download link
+    downloadLink.style.display = "none";
+
+    // Add the link to DOM
+    document.body.appendChild(downloadLink);
+
+    // Click download link
+    downloadLink.click();
+}
+
+  function buscarCuenta(evento) {
+  
+  	var _Cuenta = document.getElementById("Cuenta").value;
+
+    if(_Cuenta == ""){
+			alert("Ingrese un código de empresa");
+			return;
+		};
+
+		 $.ajax({ 
+        type: 'GET', 
+        url: 'https://stock-api-scrape.herokuapp.com/api/stocks/history?stock_name='+ _Cuenta +'&rows_limit=100&apikey=5a40dc0e5f2ada2d741f16cdca401c85a864887fc02f470d13dc30b121d4c02e', 
+        data: { get_param: 'value' }, 
+        success: function (data) { 
+           var Index = 0;
+           const $elemento = document.querySelector("#table");
+           $elemento.innerHTML = "";
+           console.log(data.company_name);
+            $("#company_name").text(data.company_name);
+
+             $.each(data.stock_history, function(i, item) {
+              lista = document.getElementById("table");
+              var tr = document.createElement("tr");
+              var columna0 = document.createElement("th")
+              columna0.innerHTML = i + 1;
+              var columna1 = document.createElement("th")
+              columna1.innerHTML = item.date;
+              var columna2 = document.createElement("th")
+              columna2.innerHTML = item.open;
+              var columna3 = document.createElement("th")
+              columna3.innerHTML = item.high;
+              var columna4 = document.createElement("th")
+              columna4.innerHTML = item.low;
+              var columna5 = document.createElement("th")
+              columna5.innerHTML = item.close;
+              var columna6 = document.createElement("th")
+              columna6.innerHTML = item.adj_close;
+              var columna7 = document.createElement("th")
+              columna7.innerHTML = item.volume;
+              lista.appendChild(tr);
+              tr.appendChild(columna0);
+              tr.appendChild(columna1);
+              tr.appendChild(columna2);
+              tr.appendChild(columna3);
+              tr.appendChild(columna4);
+				  tr.appendChild(columna5);
+				  tr.appendChild(columna6);
+ 				  tr.appendChild(columna7);
+
+             });
+
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+        alert("No se encontró registro de la cuenta " + _Cuenta);
+     	  }
+      });
+
+
+  }
+</script>
+ <script type="text/javascript">
+ 	 let p = document.getElementById("foo"); // Encuentra el elemento "p" en el sitio
+  p.onclick = Buscar; // Agrega función onclick al elemento
+    
+
+	function Buscar(evento) {
+		
+		var _Cuenta = document.getElementById("Cuenta").value;
+		if(_Cuenta == ""){
+			alert("Ingrese un código de empresa");
+			return;
+		}
+
+		
+	}
+
+
+ </script>
+ <script>
+
+	window.onload = function () {
+     $.ajax({ 
+        type: 'GET', 
+        url: 'https://stock-api-scrape.herokuapp.com/api/stocks/history?stock_name=AMZN&rows_limit=100&apikey=5a40dc0e5f2ada2d741f16cdca401c85a864887fc02f470d13dc30b121d4c02e', 
+        data: { get_param: 'value' }, 
+        success: function (data) { 
+           var Index = 0;
+          	const $elemento = document.querySelector("#table");
+          	$elemento.innerHTML = "";
+            $("#company_name").text(data.company_name);
+
+             $.each(data.stock_history, function(i, item) {
+              lista = document.getElementById("table");
+              var tr = document.createElement("tr");
+              var columna0 = document.createElement("th")
+              columna0.innerHTML = i + 1;
+              var columna1 = document.createElement("th")
+              columna1.innerHTML = item.date;
+              var columna2 = document.createElement("th")
+              columna2.innerHTML = item.open;
+              var columna3 = document.createElement("th")
+              columna3.innerHTML = item.high;
+              var columna4 = document.createElement("th")
+              columna4.innerHTML = item.low;
+              var columna5 = document.createElement("th")
+              columna5.innerHTML = item.close;
+              var columna6 = document.createElement("th")
+              columna6.innerHTML = item.adj_close;
+              var columna7 = document.createElement("th")
+              columna7.innerHTML = item.volume;
+              lista.appendChild(tr);
+              tr.appendChild(columna0);
+              tr.appendChild(columna1);
+              tr.appendChild(columna2);
+              tr.appendChild(columna3);
+              tr.appendChild(columna4);
+				  tr.appendChild(columna5);
+				  tr.appendChild(columna6);
+ 				  tr.appendChild(columna7);
+
+             });
+
+
+        }
+    });
+	}
+
+
+        
+
+ </script>
+ 
+</body>
+</html>
